@@ -31,3 +31,25 @@ export function createServiceClient(): SupabaseClient {
   }
   return createClient(url, serviceRoleKey)
 }
+
+/**
+ * Track API usage — calls the increment_api_usage() Postgres function.
+ * Non-blocking: fire and forget. Errors are logged but never thrown.
+ */
+export async function trackApiUsage(
+  source: 'seats_aero' | 'serpapi' | 'atf',
+  calls: number = 1
+): Promise<void> {
+  try {
+    const supabase = createServiceClient()
+    const { error } = await supabase.rpc('increment_api_usage', {
+      p_source: source,
+      p_calls: calls,
+    })
+    if (error) {
+      console.error(`[api_usage] Failed to track ${source}:`, error.message)
+    }
+  } catch (err) {
+    console.error(`[api_usage] Exception tracking ${source}:`, err)
+  }
+}
