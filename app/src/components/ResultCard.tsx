@@ -216,7 +216,15 @@ function FlightOption({ trip }: { trip: TripOption }) {
 // Main Component
 // ---------------------------------------------------------------------------
 
-export default function ResultCard({ item }: { item: SearchResultItem }) {
+export default function ResultCard({
+  item,
+  isCompared = false,
+  onToggleCompare,
+}: {
+  item: SearchResultItem
+  isCompared?: boolean
+  onToggleCompare?: (item: SearchResultItem) => void
+}) {
   const [expanded, setExpanded] = useState(false)
   const [tripData, setTripData] = useState<TripDetailsResponse | null>(null)
   const [tripLoading, setTripLoading] = useState(false)
@@ -250,11 +258,43 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
   const displayTrips = tripData?.trips ?? []
 
   return (
-    <div className="bg-bg-surface border border-border rounded-card shadow-card transition-all duration-250 ease-smooth hover:shadow-card-hover hover:-translate-y-0.5">
+    <div className={`
+      bg-bg-surface border rounded-card shadow-card
+      transition-all duration-250 ease-smooth
+      hover:shadow-card-hover hover:-translate-y-0.5
+      ${isCompared ? 'border-accent-primary border-l-[3px]' : 'border-border'}
+    `}>
       <div className="p-5 md:p-6">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="flex-1 min-w-0">
-            <p className="font-heading text-overline text-text-tertiary uppercase tracking-widest mb-1">
+          <div className="flex-1 min-w-0 relative">
+            {/* Compare bookmark icon — top right on mobile, inline on desktop */}
+            {onToggleCompare && (
+              <button
+                type="button"
+                onClick={() => onToggleCompare(item)}
+                className={`
+                  absolute top-0 right-0 md:relative md:float-right
+                  w-8 h-8 flex items-center justify-center rounded-full
+                  transition-all duration-200 ease-smooth
+                  ${isCompared
+                    ? 'text-accent-primary bg-accent-primary-light'
+                    : 'text-text-tertiary hover:text-accent-primary hover:bg-accent-primary-light'
+                  }
+                `}
+                aria-label={isCompared ? 'Remove from compare' : 'Add to compare'}
+              >
+                <svg className="w-4.5 h-4.5" viewBox="0 0 18 18" fill={isCompared ? 'currentColor' : 'none'}>
+                  <path
+                    d="M3 3.75C3 2.92157 3.67157 2.25 4.5 2.25H13.5C14.3284 2.25 15 2.92157 15 3.75V16.5L9 13.125L3 16.5V3.75Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )}
+            <p className="font-heading text-overline text-text-tertiary uppercase tracking-widest mb-1 pr-10 md:pr-0">
               {capitalize(item.source)}
               {item.airlines && item.airlines !== item.source && <span> · {item.airlines}</span>}
             </p>

@@ -15,6 +15,7 @@ import SearchForm from '@/components/SearchForm'
 import ResultCard from '@/components/ResultCard'
 import ProgramFilter from '@/components/ProgramFilter'
 import ResultsControls, { type SortOption } from '@/components/ResultsControls'
+import ComparePanel, { MAX_COMPARE_ITEMS } from '@/components/ComparePanel'
 import type { SearchResultItem } from '@/app/api/search/route'
 
 // ---------------------------------------------------------------------------
@@ -97,6 +98,11 @@ function SearchResults() {
   // Sort state
   const [activeSort, setActiveSort] = useState<SortOption>('best_value')
 
+  // Compare state
+  const [compareItems, setCompareItems] = useState<SearchResultItem[]>([])
+  const [comparePanelOpen, setComparePanelOpen] = useState(false)
+  const compareIds = useMemo(() => new Set(compareItems.map(i => i.id)), [compareItems])
+
   // Extract unique programs sorted by result count (most results first)
   const availablePrograms = (() => {
     if (state.results.length === 0) return []
@@ -164,11 +170,41 @@ function SearchResults() {
     setSelectedPrograms(new Set())
   }, [])
 
+  // Compare handlers
+  const handleToggleCompare = useCallback((item: SearchResultItem) => {
+    setCompareItems((prev) => {
+      const exists = prev.some(i => i.id === item.id)
+      if (exists) {
+        return prev.filter(i => i.id !== item.id)
+      }
+      if (prev.length >= MAX_COMPARE_ITEMS) return prev
+      const next = [...prev, item]
+      // Auto-open panel on first add
+      if (prev.length === 0) setComparePanelOpen(true)
+      return next
+    })
+  }, [])
+
+  const handleRemoveCompare = useCallback((id: string) => {
+    setCompareItems((prev) => prev.filter(i => i.id !== id))
+  }, [])
+
+  const handleClearCompare = useCallback(() => {
+    setCompareItems([])
+    setComparePanelOpen(false)
+  }, [])
+
+  const handleToggleComparePanel = useCallback(() => {
+    setComparePanelOpen((prev) => !prev)
+  }, [])
+
   const fetchResults = useCallback(
     async (params: { origin: string; destination: string; date: string; cabin: CabinClass }) => {
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
       setSelectedPrograms(new Set())
       setActiveSort('best_value')
+      setCompareItems([])
+      setComparePanelOpen(false)
 
       try {
         const qs = new URLSearchParams({
@@ -386,7 +422,12 @@ function SearchResults() {
         {state.status === 'success' && filteredResults.length > 0 && (
           <div className="space-y-4">
             {filteredResults.map((item) => (
-              <ResultCard key={item.id} item={item} />
+              <ResultCard
+                key={item.id}
+                item={item}
+                isCompared={compareIds.has(item.id)}
+                onToggleCompare={handleToggleCompare}
+              />
             ))}
           </div>
         )}
@@ -403,6 +444,15 @@ function SearchResults() {
           </div>
         )}
       </div>
+
+      {/* Compare panel */}
+      <ComparePanel
+        items={compareItems}
+        isOpen={comparePanelOpen}
+        onClose={handleToggleComparePanel}
+        onRemove={handleRemoveCompare}
+        onClear={handleClearCompare}
+      />
     </div>
   )
 }
