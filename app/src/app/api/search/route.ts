@@ -4,7 +4,7 @@
  * Orchestrates the full data pipeline:
  * 1. Check Supabase cache for recent results
  * 2. If cache miss: query Seats.aero for award availability
- * 3. Query Railway Python service for cash pricing
+ * 3. Query SerpAPI Google Flights for cash pricing
  * 4. Compute CPM for each result
  * 5. Rank by CPM value
  * 6. Cache results in Supabase
@@ -29,6 +29,10 @@ import {
   type CPMCalculation,
   type ProgramValuation,
 } from '@/lib/cpm'
+import {
+  searchCashPricing,
+  findLowestCashPrice,
+} from '@/lib/serpapi'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,27 +43,6 @@ interface SearchParams {
   destination: string
   date: string
   cabin: CabinClass
-}
-
-interface FlightPricingResult {
-  price: number | null
-  airline: string | null
-  departure: string | null
-  arrival: string | null
-  duration: string | null
-  stops: number | null
-  is_best: boolean
-}
-
-interface FlightPricingResponse {
-  origin: string
-  destination: string
-  date: string
-  cabin: string
-  flights: FlightPricingResult[]
-  current_price: string | null
-  source: string
-  fetched_at: string
 }
 
 export interface SearchResultItem {
@@ -106,62 +89,6 @@ interface SearchResponse {
     seatsAeroRateLimit: number | null
     searchDurationMs: number
   }
-}
-
-// ---------------------------------------------------------------------------
-// Flight Pricing (Railway Python Service)
-// ---------------------------------------------------------------------------
-
-async function fetchCashPricing(
-  params: SearchParams
-): Promise<FlightPricingResponse | null> {
-  const flightPricingUrl = process.env.FLIGHT_PRICING_API_URL
-  if (!flightPricingUrl) {
-    console.warn('FLIGHT_PRICING_API_URL not set — skipping cash pricing')
-    return null
-  }
-
-  try {
-    const response = await fetch(`${flightPricingUrl}/search`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        origin: params.origin.toUpperCase(),
-        destination: params.destination.toUpperCase(),
-        date: params.date,
-        cabin: params.cabin,
-      }),
-    })
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => 'no body')
-      console.error(`Flight pricing service error: ${response.status} — ${body}`)
-      return null
-    }
-
-    return response.json()
-  } catch (err) {
-    console.error('Flight pricing service unreachable:', err)
-    return null
-  }
-}
-
-/**
- * Find the best cash price match for a route.
- * Returns the lowest cash price from the pricing results.
- */
-function findBestCashPrice(
-  pricingResponse: FlightPricingResponse | null
-): number | null {
-  if (!pricingResponse?.flights?.length) return null
-
-  const prices = pricingResponse.flights
-    .map((f) => f.price)
-    .filter((p): p is number => p !== null && p > 0)
-
-  if (prices.length === 0) return null
-
-  return Math.min(...prices)
 }
 
 // ---------------------------------------------------------------------------
@@ -314,7 +241,7 @@ export async function GET(request: NextRequest) {
       } satisfies SearchResponse)
     }
 
-    // 2. Parallel fetch: Seats.aero + cash pricing + program valuations
+    // 2. Parallel fetch: Seats.aero + SerpAPI cash pricing + program valuations
     const [seatsResult, pricingResult, valuations] = await Promise.all([
       searchAvailability({
         origin: params.origin,
@@ -322,24 +249,32 @@ export async function GET(request: NextRequest) {
         cabin: params.cabin,
         startDate: params.date,
       }),
-      fetchCashPricing(params),
+      searchCashPricing(
+        params.origin,
+        params.destination,
+        params.date,
+        params.cabin
+      ),
       loadProgramValuations(),
     ])
 
     // 3. Find best cash price — with economy fallback for premium cabins
-    let bestCashPrice = findBestCashPrice(pricingResult)
-    let cashPriceSource: 'google_flights' | 'google_flights_economy_ref' | 'unavailable' = bestCashPrice !== null ? 'google_flights' : 'unavailable'
+    let bestCashPrice = findLowestCashPrice(pricingResult)
+    let cashPriceSource: 'serpapi' | 'serpapi_economy_ref' | 'unavailable' =
+      bestCashPrice !== null ? 'serpapi' : 'unavailable'
 
     // If no cash price for the searched cabin, try economy as a reference
     if (bestCashPrice === null && params.cabin !== 'economy') {
-      const fallbackPricing = await fetchCashPricing({
-        ...params,
-        cabin: 'economy' as CabinClass,
-      })
-      const fallbackPrice = findBestCashPrice(fallbackPricing)
+      const fallbackPricing = await searchCashPricing(
+        params.origin,
+        params.destination,
+        params.date,
+        'economy'
+      )
+      const fallbackPrice = findLowestCashPrice(fallbackPricing)
       if (fallbackPrice !== null) {
         bestCashPrice = fallbackPrice
-        cashPriceSource = 'google_flights_economy_ref'
+        cashPriceSource = 'serpapi_economy_ref'
       }
     }
 
