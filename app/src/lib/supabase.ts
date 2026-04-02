@@ -1,22 +1,33 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Browser/client-side Supabase client.
  * Uses the anon key — safe for client-side usage with RLS.
+ * Lazy-initialized to avoid build-time errors when env vars aren't set.
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+let _supabase: SupabaseClient | null = null
+
+export function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!url || !key) {
+      throw new Error('Supabase URL and anon key must be set')
+    }
+    _supabase = createClient(url, key)
+  }
+  return _supabase
+}
 
 /**
  * Server-side Supabase client with service role key.
  * Use ONLY in API routes / server components — never expose to the client.
  */
-export function createServiceClient() {
+export function createServiceClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceRoleKey) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set')
+  if (!url || !serviceRoleKey) {
+    throw new Error('Supabase URL and service role key must be set')
   }
-  return createClient(supabaseUrl, serviceRoleKey)
+  return createClient(url, serviceRoleKey)
 }
