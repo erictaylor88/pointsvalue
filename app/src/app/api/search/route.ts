@@ -42,8 +42,9 @@ interface FlightPricingResult {
   airline: string | null
   departure: string | null
   arrival: string | null
-  duration_minutes: number | null
+  duration: string | null
   stops: number | null
+  is_best: boolean
 }
 
 interface FlightPricingResponse {
@@ -52,6 +53,7 @@ interface FlightPricingResponse {
   date: string
   cabin: string
   flights: FlightPricingResult[]
+  current_price: string | null
   source: string
   fetched_at: string
 }

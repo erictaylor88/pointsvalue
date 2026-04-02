@@ -8,7 +8,8 @@ No business logic, no CPM computation, no caching. All intelligence lives in the
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
+import re
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -21,8 +22,8 @@ logging.basicConfig(level=logging.INFO)
 
 app = FastAPI(
     title="PointsValue Flight Pricing",
-    description="Google Flights cash pricing via fli",
-    version="0.1.0",
+    description="Google Flights cash pricing via fast-flights",
+    version="0.2.0",
 )
 
 # CORS — allow the Next.js frontend
@@ -49,7 +50,7 @@ class CabinClass(str, Enum):
 class SearchRequest(BaseModel):
     origin: str = Field(..., min_length=3, max_length=3, description="IATA airport code")
     destination: str = Field(..., min_length=3, max_length=3, description="IATA airport code")
-    date: date = Field(..., description="Departure date (YYYY-MM-DD)")
+    date: str = Field(..., description="Departure date (YYYY-MM-DD)")
     cabin: CabinClass = Field(default=CabinClass.economy)
 
 
@@ -58,9 +59,9 @@ class FlightResult(BaseModel):
     airline: Optional[str] = None
     departure: Optional[str] = None
     arrival: Optional[str] = None
-    duration_minutes: Optional[int] = None
+    duration: Optional[str] = None
     stops: Optional[int] = None
-    flight_numbers: Optional[str] = None
+    is_best: bool = False
 
 
 class SearchResponse(BaseModel):
@@ -69,109 +70,86 @@ class SearchResponse(BaseModel):
     date: str
     cabin: str
     flights: list[FlightResult]
-    source: str = "google_flights_fli"
+    current_price: Optional[str] = Field(None, description="Google price assessment: low, typical, or high")
+    source: str = "google_flights"
     fetched_at: str
 
 
 # ---------------------------------------------------------------------------
-# Fli integration
+# fast-flights integration
 # ---------------------------------------------------------------------------
 
-# Map our cabin names to fli's SeatType enum
+# Map our cabin names to fast-flights seat names
 CABIN_MAP = {
-    "economy": "ECONOMY",
-    "premium": "PREMIUM_ECONOMY",
-    "business": "BUSINESS",
-    "first": "FIRST",
+    "economy": "economy",
+    "premium": "premium-economy",
+    "business": "business",
+    "first": "first",
 }
 
+# Parse price string like "$245", "$1,234" → float
+PRICE_RE = re.compile(r"[\$£€]?([\d,]+(?:\.\d{2})?)")
 
-def _search_with_fli(origin: str, destination: str, travel_date: str, cabin: str) -> list[FlightResult]:
+
+def _parse_price(price_str: str) -> Optional[float]:
+    """Extract numeric price from a formatted string like '$1,234'."""
+    if not price_str:
+        return None
+    match = PRICE_RE.search(price_str)
+    if match:
+        return float(match.group(1).replace(",", ""))
+    return None
+
+
+def _search_flights(
+    origin: str, destination: str, travel_date: str, cabin: str
+) -> tuple[list[FlightResult], Optional[str]]:
     """
-    Search Google Flights via fli library.
-    Returns a list of FlightResult objects.
+    Search Google Flights via fast-flights library.
+    Returns (list of FlightResult, current_price assessment).
     """
     try:
-        from fli.models import (
-            FlightSearchFilters,
-            FlightSegment,
-            PassengerInfo,
-            SeatType,
-        )
-        from fli.search import SearchFlights
+        from fast_flights import FlightData, Passengers, get_flights
     except ImportError as e:
-        logger.error(f"fli import failed: {e}")
+        logger.error(f"fast-flights import failed: {e}")
         raise HTTPException(
             status_code=503,
             detail="Flight search library not available",
         )
 
-    # Map cabin to SeatType enum
-    seat_type_name = CABIN_MAP.get(cabin, "ECONOMY")
-    try:
-        seat_type = SeatType[seat_type_name]
-    except KeyError:
-        seat_type = SeatType.ECONOMY
+    seat = CABIN_MAP.get(cabin, "economy")
 
-    # Build search filters
-    # fli accepts airport codes as tuples: [[code, radius]]
-    # We pass IATA codes directly — fli handles the protobuf encoding
-    filters = FlightSearchFilters(
-        passenger_info=PassengerInfo(adults=1),
-        flight_segments=[
-            FlightSegment(
-                departure_airport=[[origin, 0]],
-                arrival_airport=[[destination, 0]],
-                travel_date=travel_date,
+    result = get_flights(
+        flight_data=[
+            FlightData(
+                date=travel_date,
+                from_airport=origin,
+                to_airport=destination,
             )
         ],
-        seat_type=seat_type,
+        trip="one-way",
+        seat=seat,
+        passengers=Passengers(adults=1),
+        fetch_mode="common",
     )
 
-    search = SearchFlights()
-    results = search.search(filters)
-
     flights: list[FlightResult] = []
-    for flight in results:
-        # Extract flight details
-        airline_names = []
-        flight_nums = []
-        dep_time = None
-        arr_time = None
-        total_duration = getattr(flight, 'duration', None)
-        stops = getattr(flight, 'stops', 0)
-
-        # Extract leg details if available
-        legs = getattr(flight, 'legs', [])
-        for leg in legs:
-            airline_val = getattr(leg, 'airline', None)
-            if airline_val:
-                # airline might be an enum — get its value
-                name = airline_val.value if hasattr(airline_val, 'value') else str(airline_val)
-                airline_names.append(name)
-            fn = getattr(leg, 'flight_number', None)
-            if fn:
-                flight_nums.append(str(fn))
-
-        if legs:
-            dep_dt = getattr(legs[0], 'departure_datetime', None)
-            arr_dt = getattr(legs[-1], 'arrival_datetime', None)
-            dep_time = str(dep_dt) if dep_dt else None
-            arr_time = str(arr_dt) if arr_dt else None
-
-        price = getattr(flight, 'price', None)
+    for flight in result.flights:
+        price_usd = _parse_price(flight.price)
 
         flights.append(FlightResult(
-            price=float(price) if price is not None else None,
-            airline=', '.join(airline_names) if airline_names else None,
-            departure=dep_time,
-            arrival=arr_time,
-            duration_minutes=int(total_duration) if total_duration else None,
-            stops=int(stops) if stops is not None else None,
-            flight_numbers=', '.join(flight_nums) if flight_nums else None,
+            price=price_usd,
+            airline=flight.name or None,
+            departure=flight.departure or None,
+            arrival=flight.arrival or None,
+            duration=flight.duration or None,
+            stops=flight.stops if flight.stops is not None else None,
+            is_best=flight.is_best,
         ))
 
-    return flights
+    current_price = getattr(result, "current_price", None)
+
+    return flights, current_price
 
 
 # ---------------------------------------------------------------------------
@@ -183,6 +161,8 @@ async def health():
     return {
         "status": "ok",
         "service": "flight-pricing",
+        "version": "0.2.0",
+        "library": "fast-flights",
         "timestamp": datetime.utcnow().isoformat(),
     }
 
@@ -195,13 +175,13 @@ async def search_flights(req: SearchRequest):
     """
     origin = req.origin.upper()
     destination = req.destination.upper()
-    travel_date = req.date.isoformat()
+    travel_date = req.date
     cabin = req.cabin.value
 
-    logger.info(f"Searching: {origin} → {destination} on {travel_date} ({cabin})")
+    logger.info(f"Searching: {origin} -> {destination} on {travel_date} ({cabin})")
 
     try:
-        flights = _search_with_fli(origin, destination, travel_date, cabin)
+        flights, current_price = _search_flights(origin, destination, travel_date, cabin)
     except HTTPException:
         raise
     except Exception as e:
@@ -211,7 +191,7 @@ async def search_flights(req: SearchRequest):
             detail=f"Google Flights search failed: {str(e)}",
         )
 
-    logger.info(f"Found {len(flights)} flights for {origin} → {destination}")
+    logger.info(f"Found {len(flights)} flights for {origin} -> {destination}")
 
     return SearchResponse(
         origin=origin,
@@ -219,5 +199,6 @@ async def search_flights(req: SearchRequest):
         date=travel_date,
         cabin=cabin,
         flights=flights,
+        current_price=current_price,
         fetched_at=datetime.utcnow().isoformat(),
     )
