@@ -319,6 +319,9 @@ export default function ResultCard({
             {item.cashPrice !== null && (
               <p className="font-body text-caption text-text-secondary md:mt-1">
                 Cash: <span className="font-mono font-medium">{formatCurrency(item.cashPrice)}</span>
+                {item.cashPriceSource === 'google_flights_economy_ref' && (
+                  <span className="text-text-tertiary text-[11px]"> (econ)</span>
+                )}
               </p>
             )}
           </div>
@@ -378,8 +381,11 @@ export default function ResultCard({
 
             {displayTrips.length > 0 && (
               <div>
-                <p className="font-heading text-overline text-text-tertiary uppercase tracking-widest mb-2">
+                <p className="font-heading text-overline text-text-tertiary uppercase tracking-widest mb-0.5">
                   {displayTrips.length} flight option{displayTrips.length > 1 ? 's' : ''}
+                </p>
+                <p className="font-body text-caption text-text-tertiary mb-2">
+                  Available routings for this {capitalize(item.cabin)} class award
                 </p>
                 <div className="space-y-2">
                   {displayTrips.slice(0, 8).map((trip) => <FlightOption key={trip.id} trip={trip} />)}
@@ -422,7 +428,11 @@ export default function ResultCard({
               )}
               <div className="mt-3 pt-3 border-t border-border">
                 <p className="font-body text-caption text-text-tertiary">
-                  Award data from Seats.aero{item.cashPriceSource === 'google_flights' && ' · Cash price from Google Flights'}
+                  Award data from Seats.aero
+                  {item.cashPriceSource === 'google_flights' && ' · Cash price from Google Flights'}
+                  {item.cashPriceSource === 'google_flights_economy_ref' && (
+                    <span className="text-deal-fair"> · Economy cash price used as reference ({capitalize(item.cabin)} price unavailable)</span>
+                  )}
                   {item.lastSeen && <> · Last seen {new Date(item.lastSeen).toLocaleDateString()}</>}
                 </p>
               </div>

@@ -195,6 +195,7 @@ function assembleResults(
   availabilities: SeatsAeroAvailability[],
   cabin: CabinClass,
   cashPrice: number | null,
+  cashPriceSource: string,
   valuations: Map<string, ProgramValuation>
 ): SearchResultItem[] {
   const results: SearchResultItem[] = []
@@ -233,7 +234,7 @@ function assembleResults(
       taxesCurrency: avail.TaxesCurrency || 'USD',
       remainingSeats: cabinData.remainingSeats,
       cashPrice,
-      cashPriceSource: cashPrice !== null ? 'google_flights' : 'unavailable',
+      cashPriceSource,
       cpm,
       isDirect: false, // Will be enriched from trip details if needed
       availabilityConfirmed: cabinData.available,
@@ -325,14 +326,29 @@ export async function GET(request: NextRequest) {
       loadProgramValuations(),
     ])
 
-    // 3. Find best cash price
-    const bestCashPrice = findBestCashPrice(pricingResult)
+    // 3. Find best cash price — with economy fallback for premium cabins
+    let bestCashPrice = findBestCashPrice(pricingResult)
+    let cashPriceSource: 'google_flights' | 'google_flights_economy_ref' | 'unavailable' = bestCashPrice !== null ? 'google_flights' : 'unavailable'
+
+    // If no cash price for the searched cabin, try economy as a reference
+    if (bestCashPrice === null && params.cabin !== 'economy') {
+      const fallbackPricing = await fetchCashPricing({
+        ...params,
+        cabin: 'economy' as CabinClass,
+      })
+      const fallbackPrice = findBestCashPrice(fallbackPricing)
+      if (fallbackPrice !== null) {
+        bestCashPrice = fallbackPrice
+        cashPriceSource = 'google_flights_economy_ref'
+      }
+    }
 
     // 4. Assemble results with CPM computation
     const results = assembleResults(
       seatsResult.data,
       params.cabin,
       bestCashPrice,
+      cashPriceSource,
       valuations
     )
 
