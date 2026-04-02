@@ -10,10 +10,11 @@
  */
 
 import { useSearchParams } from 'next/navigation'
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import SearchForm from '@/components/SearchForm'
 import ResultCard from '@/components/ResultCard'
 import ProgramFilter from '@/components/ProgramFilter'
+import ResultsControls, { type SortOption } from '@/components/ResultsControls'
 import type { SearchResultItem } from '@/app/api/search/route'
 
 // ---------------------------------------------------------------------------
@@ -93,6 +94,9 @@ function SearchResults() {
   // Program filter state — empty = show all
   const [selectedPrograms, setSelectedPrograms] = useState<Set<string>>(new Set())
 
+  // Sort state
+  const [activeSort, setActiveSort] = useState<SortOption>('best_value')
+
   // Extract unique programs sorted by result count (most results first)
   const availablePrograms = (() => {
     if (state.results.length === 0) return []
@@ -105,11 +109,44 @@ function SearchResults() {
       .map(([program]) => program)
   })()
 
-  // Filter results by selected programs
-  const filteredResults =
-    selectedPrograms.size === 0
-      ? state.results
-      : state.results.filter((r) => selectedPrograms.has(r.source))
+  // Filter + sort results
+  const filteredResults = useMemo(() => {
+    // 1. Filter by program
+    const filtered =
+      selectedPrograms.size === 0
+        ? [...state.results]
+        : state.results.filter((r) => selectedPrograms.has(r.source))
+
+    // 2. Sort
+    switch (activeSort) {
+      case 'best_value':
+        // CPM descending (best deals first), no-cash-price items at end
+        filtered.sort((a, b) => {
+          if (!a.cpm.cashPriceAvailable && !b.cpm.cashPriceAvailable) return 0
+          if (!a.cpm.cashPriceAvailable) return 1
+          if (!b.cpm.cashPriceAvailable) return -1
+          return b.cpm.cpm - a.cpm.cpm
+        })
+        break
+      case 'lowest_miles':
+        filtered.sort((a, b) => a.milesRequired - b.milesRequired)
+        break
+      case 'lowest_cash':
+        // Items with cash price first, sorted ascending; no-price items at end
+        filtered.sort((a, b) => {
+          if (a.cashPrice === null && b.cashPrice === null) return 0
+          if (a.cashPrice === null) return 1
+          if (b.cashPrice === null) return -1
+          return a.cashPrice - b.cashPrice
+        })
+        break
+      case 'lowest_taxes':
+        filtered.sort((a, b) => a.taxesCents - b.taxesCents)
+        break
+    }
+
+    return filtered
+  }, [state.results, selectedPrograms, activeSort])
 
   const handleToggleProgram = useCallback((program: string) => {
     setSelectedPrograms((prev) => {
@@ -131,6 +168,7 @@ function SearchResults() {
     async (params: { origin: string; destination: string; date: string; cabin: CabinClass }) => {
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
       setSelectedPrograms(new Set())
+      setActiveSort('best_value')
 
       try {
         const qs = new URLSearchParams({
@@ -194,6 +232,15 @@ function SearchResults() {
     [fetchResults]
   )
 
+  // Quick cabin switch — triggers a new search with the same route/date
+  const handleCabinChange = useCallback(
+    (newCabin: CabinClass) => {
+      if (!from || !to || !date || newCabin === cabin) return
+      handleSearch({ origin: from, destination: to, date, cabin: newCabin })
+    },
+    [from, to, date, cabin, handleSearch]
+  )
+
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Sticky search bar */}
@@ -252,6 +299,18 @@ function SearchResults() {
               selected={selectedPrograms}
               onToggle={handleToggleProgram}
               onClearAll={handleClearPrograms}
+            />
+          </div>
+        )}
+
+        {/* Cabin quick-switch + sort controls */}
+        {state.status === 'success' && state.results.length > 0 && (
+          <div className="mb-4">
+            <ResultsControls
+              activeCabin={cabin}
+              onCabinChange={handleCabinChange}
+              activeSort={activeSort}
+              onSortChange={setActiveSort}
             />
           </div>
         )}
