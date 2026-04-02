@@ -329,7 +329,7 @@ export default function ResultCard({
           <div className="flex items-center md:flex-col md:items-end gap-3 md:gap-2">
             {item.cpm.cashPriceAvailable ? (
               <div className="flex items-baseline gap-1">
-                <span className={`font-mono text-data-hero font-medium ${cpmColor}`}>{formatCpm(item.cpm.cpm)}</span>
+                <span className={`font-mono text-[28px] leading-[1.1] tracking-[-0.03em] md:text-data-hero font-medium ${cpmColor}`}>{formatCpm(item.cpm.cpm)}</span>
                 <span className="font-body text-caption text-text-tertiary">¢/mi</span>
               </div>
             ) : (
@@ -342,14 +342,14 @@ export default function ResultCard({
 
       <div className="border-t border-border">
         <button type="button" onClick={handleExpand}
-          className="w-full flex items-center justify-center gap-2 px-5 py-3 font-heading text-label text-text-tertiary hover:text-text-secondary hover:bg-bg-subtle transition-colors duration-200 ease-smooth"
+          className="w-full flex items-center justify-center gap-2 px-4 md:px-5 py-2.5 md:py-3 font-heading text-label text-text-tertiary hover:text-text-secondary hover:bg-bg-subtle transition-colors duration-200 ease-smooth"
           aria-expanded={expanded}>
           <span>{expanded ? 'Hide details' : 'Flights & math'}</span>
           <ChevronIcon expanded={expanded} />
         </button>
 
         {expanded && (
-          <div className="px-5 pb-5 space-y-4">
+          <div className="px-4 pb-4 md:px-5 md:pb-5 space-y-4">
             {tripData?.bookingLinks && tripData.bookingLinks.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {tripData.bookingLinks.map((link, i) => (
