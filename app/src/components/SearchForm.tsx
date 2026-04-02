@@ -231,7 +231,7 @@ export default function SearchForm({
               className="
                 flex-shrink-0 p-2 rounded-full
                 text-text-tertiary hover:text-accent-primary
-                hover:bg-accent-primary-light
+                hover:bg-accent-primary-light dark:hover:bg-accent-primary/15
                 transition-colors duration-200 ease-smooth
                 mt-4
               "
