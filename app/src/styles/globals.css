@@ -30,7 +30,14 @@
   --text-tertiary: #64748B;
   --border-default: #1E293B;
   --border-subtle: #1A2332;
+  color-scheme: dark;
 }
+
+/* Dark mode — deal quality badge backgrounds need darker variants */
+.dark .bg-deal-great-bg { background-color: rgba(5, 150, 105, 0.12) !important; }
+.dark .bg-deal-fair-bg { background-color: rgba(217, 119, 6, 0.12) !important; }
+.dark .bg-deal-below-bg { background-color: rgba(100, 116, 139, 0.12) !important; }
+.dark .bg-deal-negative-bg { background-color: rgba(220, 38, 38, 0.12) !important; }
 
 /* Font face declarations */
 /* Satoshi — loaded from Fontshare CDN in layout.tsx */
@@ -91,4 +98,31 @@ body {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-muted) 25%,
+    var(--bg-subtle) 50%,
+    var(--bg-muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Dark mode — date input color scheme */
+.dark input[type="date"] {
+  color-scheme: dark;
+}
+
+/* Dark mode — select dropdown */
+.dark select {
+  color-scheme: dark;
 }
