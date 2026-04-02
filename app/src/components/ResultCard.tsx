@@ -201,6 +201,9 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
               {item.remainingSeats > 0 && item.remainingSeats < 10 && (
                 <span className="text-deal-fair"> · {item.remainingSeats} seat{item.remainingSeats > 1 ? 's' : ''} left</span>
               )}
+              {!item.availabilityConfirmed && (
+                <span className="text-deal-fair"> · Verify on airline site</span>
+              )}
             </p>
           </div>
 

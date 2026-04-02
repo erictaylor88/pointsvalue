@@ -88,6 +88,7 @@ export interface SearchResultItem {
   cpm: CPMCalculation
   // Metadata
   isDirect: boolean
+  availabilityConfirmed: boolean  // true if program reports seats available, false if stale/uncertain
   lastSeen: string
   availabilityTrips: string   // ID for fetching trip details
 }
@@ -201,10 +202,7 @@ function assembleResults(
   for (const avail of availabilities) {
     const cabinData = extractCabinData(avail, cabin)
 
-    // Skip if this cabin isn't available
-    if (!cabinData.available) continue
-
-    // Skip if no mileage cost (data issue)
+    // Skip only if no mileage cost at all — means no data for this cabin
     if (cabinData.mileageCost <= 0) continue
 
     // Look up baseline for this program
@@ -238,6 +236,7 @@ function assembleResults(
       cashPriceSource: cashPrice !== null ? 'google_flights' : 'unavailable',
       cpm,
       isDirect: false, // Will be enriched from trip details if needed
+      availabilityConfirmed: cabinData.available,
       lastSeen: avail.UpdatedAt || avail.CreatedAt,
       availabilityTrips: avail.AvailabilityTrips || avail.ID,
     })
