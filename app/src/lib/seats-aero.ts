@@ -179,41 +179,64 @@ export interface SeatsAeroSearchResult {
 export async function searchAvailability(
   params: SeatsAeroSearchParams
 ): Promise<SeatsAeroSearchResult> {
-  const { origin, destination, cabin, startDate, endDate } = params
+  const { origin, destination, startDate, endDate } = params
 
-  const url = new URL(`${SEATS_AERO_BASE}/search`)
-  url.searchParams.set('origin_airport', origin.toUpperCase())
-  url.searchParams.set('destination_airport', destination.toUpperCase())
-  // Note: cabin is NOT sent as a query param. Cached search returns all cabins
-  // in each availability object (YAvailable, JAvailable, etc.). Cabin filtering
-  // is done client-side via extractCabinData().
-  url.searchParams.set('start_date', startDate)
-  url.searchParams.set('end_date', endDate || startDate)
+  const allData: SeatsAeroAvailability[] = []
+  let rateLimitRemaining: number | null = null
+  let cursor: number | undefined
+  let hasMore = true
 
-  const response = await fetch(url.toString(), {
-    method: 'GET',
-    headers: {
-      'Partner-Authorization': getApiKey(),
-      'Accept': 'application/json',
-    },
-  })
+  // Paginate through all results (Seats.aero returns ~10-20 per page)
+  while (hasMore) {
+    const url = new URL(`${SEATS_AERO_BASE}/search`)
+    url.searchParams.set('origin_airport', origin.toUpperCase())
+    url.searchParams.set('destination_airport', destination.toUpperCase())
+    // Note: cabin is NOT sent as a query param. Cached search returns all cabins
+    // in each availability object (YAvailable, JAvailable, etc.). Cabin filtering
+    // is done client-side via extractCabinData().
+    url.searchParams.set('start_date', startDate)
+    url.searchParams.set('end_date', endDate || startDate)
+    if (cursor !== undefined) {
+      url.searchParams.set('cursor', cursor.toString())
+    }
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error')
-    throw new Error(
-      `Seats.aero API error ${response.status}: ${errorText}`
-    )
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Partner-Authorization': getApiKey(),
+        'Accept': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error')
+      throw new Error(
+        `Seats.aero API error ${response.status}: ${errorText}`
+      )
+    }
+
+    const rlHeader = response.headers.get('X-RateLimit-Remaining')
+    if (rlHeader) {
+      rateLimitRemaining = parseInt(rlHeader, 10)
+    }
+
+    const body: CachedSearchResponse = await response.json()
+    if (body.data?.length) {
+      allData.push(...body.data)
+    }
+
+    hasMore = body.hasMore || false
+    cursor = body.cursor
+
+    // Safety: cap at 10 pages to avoid runaway loops
+    if (allData.length > 500) break
   }
 
-  const rateLimitRemaining = response.headers.get('X-RateLimit-Remaining')
-
-  const body: CachedSearchResponse = await response.json()
-
   return {
-    data: body.data || [],
-    count: body.count || 0,
-    hasMore: body.hasMore || false,
-    rateLimitRemaining: rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : null,
+    data: allData,
+    count: allData.length,
+    hasMore: false,
+    rateLimitRemaining,
   }
 }
 
