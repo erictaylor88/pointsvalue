@@ -89,7 +89,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
             <div className="text-center sm:text-left">
               <div className="flex justify-center sm:justify-start mb-4">
-                <div className="w-12 h-12 rounded-card bg-accent-primary-light flex items-center justify-center">
+                <div className="w-12 h-12 rounded-card bg-accent-primary-light dark:bg-accent-primary/20 flex items-center justify-center">
                   <SearchRouteIcon />
                 </div>
               </div>
@@ -106,7 +106,7 @@ export default function Home() {
             </div>
             <div className="text-center sm:text-left">
               <div className="flex justify-center sm:justify-start mb-4">
-                <div className="w-12 h-12 rounded-card bg-accent-primary-light flex items-center justify-center">
+                <div className="w-12 h-12 rounded-card bg-accent-primary-light dark:bg-accent-primary/20 flex items-center justify-center">
                   <ValueIcon />
                 </div>
               </div>
@@ -123,7 +123,7 @@ export default function Home() {
             </div>
             <div className="text-center sm:text-left">
               <div className="flex justify-center sm:justify-start mb-4">
-                <div className="w-12 h-12 rounded-card bg-accent-primary-light flex items-center justify-center">
+                <div className="w-12 h-12 rounded-card bg-accent-primary-light dark:bg-accent-primary/20 flex items-center justify-center">
                   <MathIcon />
                 </div>
               </div>
@@ -224,7 +224,7 @@ export default function Home() {
                 {name}
               </span>
             ))}
-            <span className="px-3 py-1.5 bg-accent-primary-light border border-accent-primary-subtle rounded-chip font-heading text-label text-accent-primary">
+            <span className="px-3 py-1.5 bg-accent-primary-light dark:bg-accent-primary/20 border border-accent-primary-subtle dark:border-accent-primary/30 rounded-chip font-heading text-label text-accent-primary">
               + more
             </span>
           </div>
