@@ -286,7 +286,6 @@ export default function SearchForm({
               className={`
                 w-full bg-transparent border-0 outline-none
                 font-body text-body-medium font-medium text-text-primary
-                [color-scheme:light]
                 ${compact ? 'text-label' : ''}
               `}
             />
