@@ -5,6 +5,8 @@ Dumb pipe: takes origin, destination, date, cabin → returns Google Flights cas
 No business logic, no CPM computation, no caching. All intelligence lives in the Next.js layer.
 """
 
+from __future__ import annotations
+
 import logging
 from datetime import date, datetime
 from enum import Enum
