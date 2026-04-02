@@ -49,24 +49,24 @@ interface SearchState {
 
 function SkeletonCard() {
   return (
-    <div className="bg-bg-surface border border-border rounded-card shadow-card p-5 md:p-6 animate-pulse">
+    <div className="bg-bg-surface border border-border rounded-card shadow-card p-5 md:p-6">
       <div className="flex flex-col md:flex-row md:items-center gap-4">
         <div className="flex-1">
-          <div className="h-3 w-20 bg-bg-muted rounded mb-3" />
+          <div className="h-3 w-20 skeleton-shimmer rounded mb-3" />
           <div className="flex items-center gap-2 mb-2">
-            <div className="h-6 w-12 bg-bg-muted rounded" />
-            <div className="h-0.5 w-6 bg-bg-muted rounded" />
-            <div className="h-6 w-12 bg-bg-muted rounded" />
+            <div className="h-6 w-12 skeleton-shimmer rounded" />
+            <div className="h-0.5 w-6 skeleton-shimmer rounded" />
+            <div className="h-6 w-12 skeleton-shimmer rounded" />
           </div>
-          <div className="h-3 w-32 bg-bg-muted rounded" />
+          <div className="h-3 w-32 skeleton-shimmer rounded" />
         </div>
         <div className="flex flex-col items-end gap-1">
-          <div className="h-5 w-24 bg-bg-muted rounded" />
-          <div className="h-3 w-16 bg-bg-muted rounded" />
+          <div className="h-5 w-24 skeleton-shimmer rounded" />
+          <div className="h-3 w-16 skeleton-shimmer rounded" />
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="h-10 w-20 bg-bg-muted rounded" />
-          <div className="h-6 w-24 bg-bg-muted rounded-badge" />
+          <div className="h-10 w-20 skeleton-shimmer rounded" />
+          <div className="h-6 w-24 skeleton-shimmer rounded-badge" />
         </div>
       </div>
     </div>
@@ -279,7 +279,7 @@ function SearchResults() {
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Sticky search bar */}
-      <div className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-lg border-b border-border py-3 px-4">
+      <div className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-lg border-b border-border py-2 sm:py-3 px-4 sm:px-6">
         <SearchForm
           initialOrigin={from}
           initialDestination={to}
@@ -292,10 +292,10 @@ function SearchResults() {
       </div>
 
       {/* Results area */}
-      <div className="max-w-content mx-auto px-4 py-6">
+      <div className="max-w-content mx-auto px-4 sm:px-6 py-4 sm:py-6">
         {/* Results header */}
         {state.status === 'success' && state.meta && (
-          <div className="flex items-baseline justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 sm:gap-4 mb-4">
             <p className="font-heading text-h3 font-medium text-text-primary">
               {selectedPrograms.size > 0
                 ? `${filteredResults.length} of ${state.meta.totalResults} result${state.meta.totalResults !== 1 ? 's' : ''}`
