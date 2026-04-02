@@ -279,7 +279,7 @@ function SearchResults() {
   return (
     <div className="min-h-screen bg-bg-primary">
       {/* Sticky search bar */}
-      <div className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-lg border-b border-border py-2 sm:py-3 px-4 sm:px-6">
+      <div className="sticky top-0 z-30 bg-bg-primary/80 backdrop-blur-lg border-b border-border py-2 sm:py-3 px-4 sm:px-6 lg:px-8">
         <SearchForm
           initialOrigin={from}
           initialDestination={to}
@@ -292,7 +292,7 @@ function SearchResults() {
       </div>
 
       {/* Results area */}
-      <div className="max-w-content mx-auto px-4 sm:px-6 py-4 sm:py-6">
+      <div className="max-w-content mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-4 sm:py-6">
         {/* Results header */}
         {state.status === 'success' && state.meta && (
           <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2 sm:gap-4 mb-4">
@@ -352,7 +352,7 @@ function SearchResults() {
 
         {/* Loading skeletons */}
         {state.status === 'loading' && (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -419,7 +419,7 @@ function SearchResults() {
 
         {/* Results list */}
         {state.status === 'success' && filteredResults.length > 0 && (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {filteredResults.map((item) => (
               <ResultCard
                 key={item.id}
