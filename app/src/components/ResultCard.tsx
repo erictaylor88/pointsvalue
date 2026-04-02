@@ -208,11 +208,6 @@ function FlightOption({ trip }: { trip: TripOption }) {
           </div>
         ))}
       </div>
-      {trip.remainingSeats > 0 && (
-        <p className="mt-1.5 font-body text-caption text-deal-fair">
-          {trip.remainingSeats} seat{trip.remainingSeats > 1 ? 's' : ''} at {formatMilesExact(trip.milesRequired)} miles
-        </p>
-      )}
     </div>
   )
 }
