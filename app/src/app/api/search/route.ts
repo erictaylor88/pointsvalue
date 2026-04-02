@@ -191,7 +191,8 @@ async function fetchCashPricing(
     })
 
     if (!response.ok) {
-      console.error(`Flight pricing service error: ${response.status}`)
+      const body = await response.text().catch(() => 'no body')
+      console.error(`Flight pricing service error: ${response.status} — ${body}`)
       return null
     }
 

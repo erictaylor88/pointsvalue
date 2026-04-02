@@ -119,6 +119,8 @@ def _search_flights(
 
     seat = CABIN_MAP.get(cabin, "economy")
 
+    # "fallback" tries direct HTTP first, then falls back to a Playwright
+    # serverless proxy if Google blocks the server IP (common on Railway/cloud).
     result = get_flights(
         flight_data=[
             FlightData(
@@ -130,8 +132,10 @@ def _search_flights(
         trip="one-way",
         seat=seat,
         passengers=Passengers(adults=1),
-        fetch_mode="common",
+        fetch_mode="fallback",
     )
+
+    logger.info(f"fast-flights returned {len(result.flights)} flights, price level: {result.current_price}")
 
     flights: list[FlightResult] = []
     for flight in result.flights:
