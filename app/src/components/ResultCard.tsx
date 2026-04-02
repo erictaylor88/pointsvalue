@@ -251,7 +251,8 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
     if (next) fetchTripDetails()
   }, [expanded, fetchTripDetails])
 
-  const cabinTrips = tripData?.trips.filter((t) => t.cabin?.toLowerCase() === item.cabin) ?? []
+  // Show all trips — routes/times/aircraft are the same regardless of cabin
+  const displayTrips = tripData?.trips ?? []
 
   return (
     <div className="bg-bg-surface border border-border rounded-card shadow-card transition-all duration-250 ease-smooth hover:shadow-card-hover hover:-translate-y-0.5">
@@ -340,20 +341,20 @@ export default function ResultCard({ item }: { item: SearchResultItem }) {
 
             {tripError && <p className="font-body text-caption text-deal-negative">{tripError}</p>}
 
-            {cabinTrips.length > 0 && (
+            {displayTrips.length > 0 && (
               <div>
                 <p className="font-heading text-overline text-text-tertiary uppercase tracking-widest mb-2">
-                  {cabinTrips.length} flight option{cabinTrips.length > 1 ? 's' : ''}
+                  {displayTrips.length} flight option{displayTrips.length > 1 ? 's' : ''}
                 </p>
                 <div className="space-y-2">
-                  {cabinTrips.slice(0, 8).map((trip) => <FlightOption key={trip.id} trip={trip} />)}
-                  {cabinTrips.length > 8 && <p className="font-body text-caption text-text-tertiary text-center">+{cabinTrips.length - 8} more options</p>}
+                  {displayTrips.slice(0, 8).map((trip) => <FlightOption key={trip.id} trip={trip} />)}
+                  {displayTrips.length > 8 && <p className="font-body text-caption text-text-tertiary text-center">+{displayTrips.length - 8} more options</p>}
                 </div>
               </div>
             )}
 
-            {tripData && cabinTrips.length === 0 && !tripLoading && (
-              <p className="font-body text-caption text-text-tertiary">No {item.cabin} class flight details available for this program.</p>
+            {tripData && displayTrips.length === 0 && !tripLoading && (
+              <p className="font-body text-caption text-text-tertiary">No flight details available for this route.</p>
             )}
 
             <div className="bg-bg-subtle rounded-chip p-4">
