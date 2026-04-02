@@ -119,7 +119,7 @@ function CompareCard({
           flex items-center justify-center rounded-full
           text-text-tertiary hover:text-deal-negative hover:bg-deal-negative-bg
           transition-colors duration-150 ease-smooth
-          opacity-0 group-hover:opacity-100 focus:opacity-100
+          opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100
         "
         aria-label="Remove from compare"
       >
@@ -233,9 +233,9 @@ export default function ComparePanel({
           className={`
             fixed z-50
             /* Mobile: bottom sheet */
-            inset-x-0 bottom-0 max-h-[70vh]
+            inset-x-0 bottom-0 max-h-[70vh] rounded-t-[20px]
             /* Desktop: right panel */
-            md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[420px]
+            md:inset-y-0 md:right-0 md:left-auto md:max-h-none md:w-[420px] md:rounded-t-none
             bg-bg-surface-elevated/95 backdrop-blur-xl
             border-t md:border-t-0 md:border-l border-border
             shadow-card-hover
