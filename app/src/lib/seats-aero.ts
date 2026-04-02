@@ -184,7 +184,9 @@ export async function searchAvailability(
   const url = new URL(`${SEATS_AERO_BASE}/search`)
   url.searchParams.set('origin_airport', origin.toUpperCase())
   url.searchParams.set('destination_airport', destination.toUpperCase())
-  url.searchParams.set('cabin', cabin)
+  // Note: cabin is NOT sent as a query param. Cached search returns all cabins
+  // in each availability object (YAvailable, JAvailable, etc.). Cabin filtering
+  // is done client-side via extractCabinData().
   url.searchParams.set('start_date', startDate)
   url.searchParams.set('end_date', endDate || startDate)
 
