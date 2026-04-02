@@ -52,7 +52,7 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center">
       {/* ── Hero Section ── */}
-      <section className="relative w-full flex flex-col items-center pt-12 sm:pt-16 lg:pt-20 pb-16 sm:pb-20 lg:pb-24 px-4 sm:px-6">
+      <section className="relative w-full flex flex-col items-center pt-12 sm:pt-16 lg:pt-20 pb-16 sm:pb-20 lg:pb-24 px-4 sm:px-6 lg:px-8">
         {/* Subtle gradient */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div
@@ -77,7 +77,7 @@ export default function Home() {
       </section>
 
       {/* ── How It Works ── */}
-      <section className="w-full bg-bg-surface border-y border-border py-16 sm:py-20 px-4 sm:px-6">
+      <section className="w-full bg-bg-surface border-y border-border py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-content mx-auto">
           <h2 className="font-heading text-h1 font-bold text-text-primary text-center mb-3">
             How It Works
@@ -143,7 +143,7 @@ export default function Home() {
       </section>
 
       {/* ── Why PointsValue ── */}
-      <section className="w-full py-16 sm:py-20 px-4 sm:px-6">
+      <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-content mx-auto">
           <h2 className="font-heading text-h1 font-bold text-text-primary text-center mb-3">
             Why PointsValue?
@@ -154,8 +154,8 @@ export default function Home() {
             a good deal.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-bg-surface border border-border rounded-card p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="bg-bg-surface border border-border rounded-card p-5 sm:p-6">
               <p className="font-heading text-h3 font-medium text-text-primary mb-2">
                 Real-time CPM computation
               </p>
@@ -165,7 +165,7 @@ export default function Home() {
                 real math on real prices.
               </p>
             </div>
-            <div className="bg-bg-surface border border-border rounded-card p-6">
+            <div className="bg-bg-surface border border-border rounded-card p-5 sm:p-6">
               <p className="font-heading text-h3 font-medium text-text-primary mb-2">
                 Deal quality at a glance
               </p>
@@ -175,7 +175,7 @@ export default function Home() {
                 No CPM expertise required.
               </p>
             </div>
-            <div className="bg-bg-surface border border-border rounded-card p-6">
+            <div className="bg-bg-surface border border-border rounded-card p-5 sm:p-6">
               <p className="font-heading text-h3 font-medium text-text-primary mb-2">
                 25+ mileage programs
               </p>
@@ -185,7 +185,7 @@ export default function Home() {
                 of them at once.
               </p>
             </div>
-            <div className="bg-bg-surface border border-border rounded-card p-6">
+            <div className="bg-bg-surface border border-border rounded-card p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-2">
                 <p className="font-heading text-h3 font-medium text-text-primary">
                   Transparent methodology
@@ -202,7 +202,7 @@ export default function Home() {
       </section>
 
       {/* ── Programs Strip ── */}
-      <section className="w-full bg-bg-surface border-y border-border py-12 sm:py-16 px-4 sm:px-6">
+      <section className="w-full bg-bg-surface border-y border-border py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-content mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
             <ProgramsIcon />
@@ -232,7 +232,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA ── */}
-      <section className="w-full py-16 sm:py-20 px-4 sm:px-6 text-center">
+      <section className="w-full py-16 sm:py-20 px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-search mx-auto">
           <h2 className="font-heading text-h1 font-bold text-text-primary mb-3">
             Ready to find your next great deal?
@@ -246,7 +246,7 @@ export default function Home() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="w-full border-t border-border py-8 px-4 sm:px-6">
+      <footer className="w-full border-t border-border py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-content mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="font-display text-[18px] text-text-primary">
@@ -256,16 +256,16 @@ export default function Home() {
               &copy; {new Date().getFullYear()}
             </span>
           </div>
-          <div className="flex items-center gap-4 font-body text-caption text-text-tertiary">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-x-4 gap-y-1 font-body text-caption text-text-tertiary">
             <span>Award data from Seats.aero</span>
             <span className="text-border">·</span>
             <span>Cash prices from Google Flights</span>
-            <span className="text-border hidden sm:inline">·</span>
+            <span className="text-border">·</span>
             <a
               href="https://pointsforecast.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline text-accent-primary hover:text-accent-primary-hover transition-colors"
+              className="text-accent-primary hover:text-accent-primary-hover transition-colors"
             >
               PointsForecast
             </a>
