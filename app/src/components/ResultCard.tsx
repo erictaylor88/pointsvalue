@@ -277,8 +277,8 @@ export default function ResultCard({
                   w-8 h-8 flex items-center justify-center rounded-full
                   transition-all duration-200 ease-smooth
                   ${isCompared
-                    ? 'text-accent-primary bg-accent-primary-light'
-                    : 'text-text-tertiary hover:text-accent-primary hover:bg-accent-primary-light'
+                    ? 'text-accent-primary bg-accent-primary-light dark:bg-accent-primary/20'
+                    : 'text-text-tertiary hover:text-accent-primary hover:bg-accent-primary-light dark:hover:bg-accent-primary/15'
                   }
                 `}
                 aria-label={isCompared ? 'Remove from compare' : 'Add to compare'}
