@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase'
+import { createServiceClient, trackApiUsage } from '@/lib/supabase'
 import {
   getCachedResults,
   cacheResults,
@@ -258,6 +258,10 @@ export async function GET(request: NextRequest) {
       loadProgramValuations(),
     ])
 
+    // Track API usage (non-blocking)
+    trackApiUsage('seats_aero', 1)
+    trackApiUsage('serpapi', 1)
+
     // 3. Find best cash price — with economy fallback for premium cabins
     let bestCashPrice = findLowestCashPrice(pricingResult)
     let cashPriceSource: 'serpapi' | 'serpapi_economy_ref' | 'unavailable' =
@@ -271,6 +275,7 @@ export async function GET(request: NextRequest) {
         params.date,
         'economy'
       )
+      trackApiUsage('serpapi', 1) // Track fallback call
       const fallbackPrice = findLowestCashPrice(fallbackPricing)
       if (fallbackPrice !== null) {
         bestCashPrice = fallbackPrice
