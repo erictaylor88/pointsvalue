@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Aperture Design System — CSS Custom Properties */
+
+:root {
+  /* Core Palette — Light Mode */
+  --bg-primary: #FFFFFF;
+  --bg-surface: #F8F9FB;
+  --bg-surface-elevated: #FFFFFF;
+  --bg-subtle: #F1F3F5;
+  --bg-muted: #E5E7EB;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-tertiary: #94A3B8;
+  --border-default: #E2E8F0;
+  --border-subtle: #F1F5F9;
+}
+
+.dark {
+  /* Core Palette — Dark Mode */
+  --bg-primary: #0B0F1A;
+  --bg-surface: #141B2D;
+  --bg-surface-elevated: #1C2541;
+  --bg-subtle: #1E293B;
+  --bg-muted: #334155;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --border-default: #1E293B;
+  --border-subtle: #1A2332;
+}
+
+/* Font face declarations */
+/* Satoshi — loaded from Fontshare CDN in layout.tsx */
+/* DM Serif Display, Inter, JetBrains Mono — loaded from Google Fonts in layout.tsx */
+
+/* Base styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visible — keyboard only */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid #4338CA;
+  outline-offset: 3px;
+}
+
+/* Scrollbar styling (subtle) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
