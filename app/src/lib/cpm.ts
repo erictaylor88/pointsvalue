@@ -152,8 +152,12 @@ function scoreDealQuality(
   baselineCpm: number | null
 ): { quality: DealQuality; label: string; percent: number | null } {
   if (baselineCpm === null || baselineCpm <= 0) {
-    // No baseline — can't score, default to fair
-    return { quality: 'fair', label: 'FAIR', percent: null }
+    // No baseline — can't score relative to program norms.
+    // Use absolute thresholds as a rough guide:
+    //   >= 1.5 CPM = great, >= 0.8 CPM = fair, < 0.8 = below
+    if (cpm >= 1.5) return { quality: 'great', label: 'GREAT DEAL', percent: null }
+    if (cpm >= 0.8) return { quality: 'fair', label: 'FAIR', percent: null }
+    return { quality: 'below', label: 'BELOW AVG', percent: null }
   }
 
   const percent = Math.round((cpm / baselineCpm) * 100)

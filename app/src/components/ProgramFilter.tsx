@@ -24,8 +24,12 @@ const PROGRAM_META: Record<string, ProgramMeta> = {
   aeroplan:        { display: 'Aeroplan',        color: '#00613B' },
   delta:           { display: 'Delta',           color: '#003A70' },
   alaska:          { display: 'Alaska',          color: '#01426A' },
+  // Seats.aero returns "virginatlantic" (no separator)
+  virginatlantic:  { display: 'Virgin Atlantic', color: '#E01A22' },
   virgin_atlantic: { display: 'Virgin Atlantic', color: '#E01A22' },
   'virgin-atlantic': { display: 'Virgin Atlantic', color: '#E01A22' },
+  // Seats.aero returns "flyingblue" (no separator)
+  flyingblue:      { display: 'Flying Blue',     color: '#002F5F' },
   flying_blue:     { display: 'Flying Blue',     color: '#002F5F' },
   'flying-blue':   { display: 'Flying Blue',     color: '#002F5F' },
   emirates:        { display: 'Emirates',        color: '#D71921' },
@@ -33,6 +37,8 @@ const PROGRAM_META: Record<string, ProgramMeta> = {
   american:        { display: 'American',        color: '#0078D2' },
   jetblue:         { display: 'JetBlue',         color: '#003876' },
   southwest:       { display: 'Southwest',       color: '#304CB2' },
+  // Seats.aero may return "britishairways" (no separator)
+  britishairways:  { display: 'British Airways', color: '#075AAA' },
   british_airways: { display: 'British Airways', color: '#075AAA' },
   'british-airways': { display: 'British Airways', color: '#075AAA' },
   qantas:          { display: 'Qantas',          color: '#E0002A' },

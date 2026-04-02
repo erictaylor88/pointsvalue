@@ -203,8 +203,7 @@ function SearchResults() {
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
       setSelectedPrograms(new Set())
       setActiveSort('best_value')
-      setCompareItems([])
-      setComparePanelOpen(false)
+      // Note: compareItems intentionally NOT cleared — users may compare across routes
 
       try {
         const qs = new URLSearchParams({
@@ -339,8 +338,8 @@ function SearchResults() {
           </div>
         )}
 
-        {/* Cabin quick-switch + sort controls */}
-        {state.status === 'success' && state.results.length > 0 && (
+        {/* Cabin quick-switch + sort controls — always visible after a search completes */}
+        {state.status === 'success' && (
           <div className="mb-4">
             <ResultsControls
               activeCabin={cabin}
