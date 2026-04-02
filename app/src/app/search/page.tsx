@@ -13,6 +13,7 @@ import { useSearchParams } from 'next/navigation'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import SearchForm from '@/components/SearchForm'
 import ResultCard from '@/components/ResultCard'
+import ProgramFilter from '@/components/ProgramFilter'
 import type { SearchResultItem } from '@/app/api/search/route'
 
 // ---------------------------------------------------------------------------
@@ -89,9 +90,47 @@ function SearchResults() {
     error: null,
   })
 
+  // Program filter state — empty = show all
+  const [selectedPrograms, setSelectedPrograms] = useState<Set<string>>(new Set())
+
+  // Extract unique programs sorted by result count (most results first)
+  const availablePrograms = (() => {
+    if (state.results.length === 0) return []
+    const counts = new Map<string, number>()
+    for (const r of state.results) {
+      counts.set(r.source, (counts.get(r.source) || 0) + 1)
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([program]) => program)
+  })()
+
+  // Filter results by selected programs
+  const filteredResults =
+    selectedPrograms.size === 0
+      ? state.results
+      : state.results.filter((r) => selectedPrograms.has(r.source))
+
+  const handleToggleProgram = useCallback((program: string) => {
+    setSelectedPrograms((prev) => {
+      const next = new Set(prev)
+      if (next.has(program)) {
+        next.delete(program)
+      } else {
+        next.add(program)
+      }
+      return next
+    })
+  }, [])
+
+  const handleClearPrograms = useCallback(() => {
+    setSelectedPrograms(new Set())
+  }, [])
+
   const fetchResults = useCallback(
     async (params: { origin: string; destination: string; date: string; cabin: CabinClass }) => {
       setState((prev) => ({ ...prev, status: 'loading', error: null }))
+      setSelectedPrograms(new Set())
 
       try {
         const qs = new URLSearchParams({
@@ -176,7 +215,10 @@ function SearchResults() {
         {state.status === 'success' && state.meta && (
           <div className="flex items-baseline justify-between mb-4">
             <p className="font-heading text-h3 font-medium text-text-primary">
-              {state.meta.totalResults} result{state.meta.totalResults !== 1 ? 's' : ''}
+              {selectedPrograms.size > 0
+                ? `${filteredResults.length} of ${state.meta.totalResults} result${state.meta.totalResults !== 1 ? 's' : ''}`
+                : `${state.meta.totalResults} result${state.meta.totalResults !== 1 ? 's' : ''}`
+              }
               <span className="text-text-secondary font-normal">
                 {' '}for {state.meta.origin} → {state.meta.destination}
               </span>
@@ -199,6 +241,18 @@ function SearchResults() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Program filter chips */}
+        {state.status === 'success' && availablePrograms.length > 1 && (
+          <div className="mb-4">
+            <ProgramFilter
+              programs={availablePrograms}
+              selected={selectedPrograms}
+              onToggle={handleToggleProgram}
+              onClearAll={handleClearPrograms}
+            />
           </div>
         )}
 
@@ -234,7 +288,7 @@ function SearchResults() {
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state — no results at all from API */}
         {state.status === 'success' && state.results.length === 0 && (
           <div className="text-center py-16">
             <p className="font-heading text-h2 text-text-primary mb-2">
@@ -246,10 +300,33 @@ function SearchResults() {
           </div>
         )}
 
+        {/* Filtered empty state — results exist but all filtered out */}
+        {state.status === 'success' && state.results.length > 0 && filteredResults.length === 0 && (
+          <div className="text-center py-12">
+            <p className="font-heading text-h3 font-medium text-text-primary mb-2">
+              No results for selected programs
+            </p>
+            <p className="font-body text-body text-text-secondary max-w-prose mx-auto mb-4">
+              Try selecting different programs or clear the filter to see all results.
+            </p>
+            <button
+              type="button"
+              onClick={handleClearPrograms}
+              className="
+                px-5 py-2.5 border border-border rounded-button
+                font-heading text-label text-text-secondary
+                hover:bg-bg-subtle transition-colors duration-200 ease-smooth
+              "
+            >
+              Show all results
+            </button>
+          </div>
+        )}
+
         {/* Results list */}
-        {state.status === 'success' && state.results.length > 0 && (
+        {state.status === 'success' && filteredResults.length > 0 && (
           <div className="space-y-4">
-            {state.results.map((item) => (
+            {filteredResults.map((item) => (
               <ResultCard key={item.id} item={item} />
             ))}
           </div>
