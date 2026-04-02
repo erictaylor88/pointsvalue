@@ -14,6 +14,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import {
+  getCachedResults,
+  cacheResults,
+} from '@/lib/cache'
+import {
   searchAvailability,
   extractCabinData,
   type CabinClass,
@@ -97,71 +101,9 @@ interface SearchResponse {
     cabin: CabinClass
     totalResults: number
     cachedAt: string | null
+    expiresAt: string | null
     seatsAeroRateLimit: number | null
     searchDurationMs: number
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Cache
-// ---------------------------------------------------------------------------
-
-const CACHE_TTL_HOURS = 4
-
-async function getCachedResults(
-  params: SearchParams
-): Promise<{ results: SearchResultItem[]; cachedAt: string } | null> {
-  try {
-    const supabase = createServiceClient()
-    const { data, error } = await supabase
-      .from('cached_searches')
-      .select('results, created_at, expires_at')
-      .eq('origin', params.origin.toUpperCase())
-      .eq('destination', params.destination.toUpperCase())
-      .eq('search_date', params.date)
-      .eq('cabin', params.cabin)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (error || !data) return null
-
-    return {
-      results: data.results as SearchResultItem[],
-      cachedAt: data.created_at,
-    }
-  } catch {
-    // Cache miss — proceed with fresh search
-    return null
-  }
-}
-
-async function cacheResults(
-  params: SearchParams,
-  results: SearchResultItem[],
-  seatsAeroRaw: unknown,
-  cashPricingRaw: unknown
-): Promise<void> {
-  try {
-    const supabase = createServiceClient()
-    const now = new Date()
-    const expiresAt = new Date(now.getTime() + CACHE_TTL_HOURS * 60 * 60 * 1000)
-
-    await supabase.from('cached_searches').insert({
-      origin: params.origin.toUpperCase(),
-      destination: params.destination.toUpperCase(),
-      search_date: params.date,
-      cabin: params.cabin,
-      results,
-      seats_aero_raw: seatsAeroRaw,
-      cash_pricing_raw: cashPricingRaw,
-      created_at: now.toISOString(),
-      expires_at: expiresAt.toISOString(),
-    })
-  } catch (err) {
-    // Non-fatal — log but don't fail the request
-    console.error('Failed to cache results:', err)
   }
 }
 
@@ -354,7 +296,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // 1. Check cache
-    const cached = await getCachedResults(params)
+    const cached = await getCachedResults<SearchResultItem[]>(params)
     if (cached) {
       return NextResponse.json({
         results: cached.results,
@@ -365,6 +307,7 @@ export async function GET(request: NextRequest) {
           cabin: params.cabin,
           totalResults: cached.results.length,
           cachedAt: cached.cachedAt,
+          expiresAt: cached.expiresAt,
           seatsAeroRateLimit: null,
           searchDurationMs: Date.now() - startTime,
         },
@@ -407,6 +350,7 @@ export async function GET(request: NextRequest) {
         cabin: params.cabin,
         totalResults: results.length,
         cachedAt: null,
+        expiresAt: null,
         seatsAeroRateLimit: seatsResult.rateLimitRemaining,
         searchDurationMs: Date.now() - startTime,
       },
