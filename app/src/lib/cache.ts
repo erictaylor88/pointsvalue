@@ -69,8 +69,12 @@ export async function getCachedResults<T>(
 
     if (error || !data) return null
 
+    // Don't serve cached empty results — they may be stale failures
+    const results = data.results as T
+    if (Array.isArray(results) && results.length === 0) return null
+
     return {
-      results: data.results as T,
+      results,
       cachedAt: data.created_at,
       expiresAt: data.expires_at,
     }

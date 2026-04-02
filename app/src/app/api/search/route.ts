@@ -337,8 +337,28 @@ export async function GET(request: NextRequest) {
       valuations
     )
 
-    // 5. Cache results (non-blocking)
-    cacheResults(params, results, seatsResult, pricingResult).catch(() => {})
+    // Debug: when no results pass filtering, include diagnostic info
+    const debug = results.length === 0 && seatsResult.data.length > 0 ? {
+      rawResultCount: seatsResult.data.length,
+      sampleRaw: seatsResult.data.slice(0, 2).map((a) => {
+        const prefix = params.cabin === 'economy' ? 'Y' : params.cabin === 'premium' ? 'W' : params.cabin === 'business' ? 'J' : 'F'
+        const raw = a as unknown as Record<string, unknown>
+        return {
+          id: a.ID,
+          source: a.Source,
+          [`${prefix}Available`]: raw[`${prefix}Available`],
+          [`${prefix}MileageCost`]: raw[`${prefix}MileageCost`],
+          [`${prefix}MileageCostRaw`]: raw[`${prefix}MileageCostRaw`],
+          [`${prefix}RemainingSeats`]: raw[`${prefix}RemainingSeats`],
+          allKeys: Object.keys(a).filter(k => k.startsWith(prefix)),
+        }
+      }),
+    } : undefined
+
+    // 5. Cache results (non-blocking, skip if empty to avoid caching failures)
+    if (results.length > 0) {
+      cacheResults(params, results, seatsResult, pricingResult).catch(() => {})
+    }
 
     // 6. Return response
     return NextResponse.json({
@@ -354,7 +374,8 @@ export async function GET(request: NextRequest) {
         seatsAeroRateLimit: seatsResult.rateLimitRemaining,
         searchDurationMs: Date.now() - startTime,
       },
-    } satisfies SearchResponse)
+      ...(debug ? { debug } : {}),
+    } satisfies SearchResponse & { debug?: unknown })
   } catch (err) {
     console.error('Search failed:', err)
     const message = err instanceof Error ? err.message : 'Search failed'
